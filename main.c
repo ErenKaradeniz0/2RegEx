@@ -129,10 +129,6 @@ int main()
     }
 }
 
-// regEx = "gr[a|e]y";
-// regExarray = "a,e";
-// color = "grey"
-
 /*
 
 Meta Characters:
