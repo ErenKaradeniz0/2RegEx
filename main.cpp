@@ -2,190 +2,272 @@
 #include <string>
 using namespace std;
 
-int main()
+// Yardımcı işlev: Verilen desenin bir parçaya eşleşip eşleşmediğini kontrol eder
+bool isSubMatch(const string &input, size_t &inputIndex, const string &subPattern, size_t &patternIndex)
 {
-    string regEx = "[a-zA-Z]";
-    string input = "AZaZ";
 
-    // cout << "Enter string " << regEx << ": ";
-    // cin >> input;
-
-    int inputindex = 0;
-    int regExindex = 0;
-    int regExArrayindex = 0;
+    size_t subPatternIndex = 0;
     int orCount = 0;
-    int regExOrindex = 0;
-    char current = ' ';
-    char regExCurrent = ' ';
-    char regExarray[30] = {}; // Initialize all elements to null characters
-
-    while (current != '\0' || regExCurrent != '\0')
+    int orIndex = 0;
+    while (subPattern[subPatternIndex] != '\0')
     {
-        current = input[inputindex];
-        regExCurrent = regEx[regExindex];
+        if (subPattern[subPatternIndex] == '|')
+        {
+            orCount++;
+            orIndex = subPatternIndex;
+        }
+        subPatternIndex++;
+    }
+    subPatternIndex = 0;
+    while (subPatternIndex < subPattern.size())
+    {
+        char subPatternChar = subPattern[subPatternIndex];
+        if (subPatternChar == '(')
+        {
+            // İç içe parantez grubunu işle
+            ++subPatternIndex;
+            size_t groupStart = subPatternIndex;
+            size_t groupEnd = 0;
+            int parenCount = 1;
+            while (subPatternIndex < subPattern.size() && parenCount != 0)
+            {
+                subPatternChar = subPattern[subPatternIndex];
+                if (subPatternChar == '(')
+                {
+                    ++parenCount;
+                }
+                else if (subPatternChar == ')')
+                {
+                    --parenCount;
+                    --subPatternIndex;
+                }
+                ++subPatternIndex;
+            }
+            string groupPattern = subPattern.substr(groupStart, subPatternIndex - groupStart);
 
-        if (current == regExCurrent)
-        {
-            if (current != '\0')
+            // İç içe parantez grubunu kontrol et
+            size_t subPatternIndexalt = 0; // Reset subPattern index for the inner group
+            if (isSubMatch(input, inputIndex, groupPattern, subPatternIndexalt))
             {
-                inputindex += 1;
-                regExindex += 1;
-            }
-            else
-            {
-                cout << "Regex and string compatible" << endl;
-                break;
-            }
-            if (regEx[regExindex] == '|')
-            {
-                cout << "Regex and string compatible first |" << endl;
-                break;
+                continue; // Bir sonraki karaktere geç
             }
         }
-        else if (current == '\0' && regExCurrent != '|')
+        else if (subPatternChar == ')')
         {
-            cout << "Not compatible Short input" << endl;
-            break;
+            subPatternIndex++;
         }
-        else if (regExCurrent == '\0')
+        else if (subPatternChar == '?')
         {
-            cout << "Regex and string compatible" << endl;
-            break;
-        }
-        else if (regExCurrent == '[')
-        {
-            while (regExCurrent != ']')
-            {
-                regExindex += 1;
-                regExCurrent = regEx[regExindex];
-                if (regExCurrent == '-')
-                {
-                    char before = regEx[regExindex - 1];
-                    char after = regEx[regExindex + 1];
-                    if (current >= before && current <= after)
-                    {
-                        regExindex += 2;
-                        regExCurrent = regEx[regExindex];
-                        inputindex += 1;
-                        current = input[inputindex];
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                if (regExCurrent == ']')
-                {
-                    regExindex += 1;
-                    regExArrayindex = 0;
-                    break;
-                }
-                regExCurrent = regExarray[regExArrayindex];
-                regExArrayindex += 1;
-            }
-
-            while (regExarray[regExArrayindex] != '\0')
-            {
-                if (current == regExarray[regExArrayindex])
-                {
-                    inputindex += 1;
-                    regExindex += 1;
-                    current = input[inputindex];
-                    regExCurrent = regEx[regExindex];
-
-                    regExArrayindex += 30;
-                    break;
-                }
-                regExArrayindex += 1;
-            }
-        }
-        else if (regExCurrent == '(')
-        {
-            while (regExCurrent != ')')
-            {
-                regExindex += 1;
-                regExCurrent = regEx[regExindex];
-                if (regExCurrent == ')')
-                {
-                    regExArrayindex = 0;
-                    break;
-                }
-                if (regExCurrent != '|')
-                {
-                    regExarray[regExArrayindex] = regExCurrent;
-                    regExArrayindex += 1;
-                }
-            }
-
-            while (regExArrayindex < 30)
-            {
-                if (current == regExarray[regExArrayindex])
-                {
-                    inputindex += 1;
-                    regExindex += 1;
-                    current = input[inputindex];
-                    regExCurrent = regEx[regExindex];
-
-                    regExArrayindex += 30;
-                    break;
-                }
-                regExArrayindex += 1;
-            }
-        }
-        else if (regExCurrent == '?')
-        {
-            regExindex += 1;
-            regExCurrent = regEx[regExindex];
-        }
-        else if (regEx[regExindex + 1] == '?')
-        {
-            regExindex += 2;
-            regExCurrent = regEx[regExindex];
+            // '?' karakterini işle
+            ++subPatternIndex; // '?' karakterini atla
         }
         else
         {
-            if (input[inputindex + 1] != '\0')
+            // Tek karakteri kontrol et
+            if (inputIndex < input.size() && input[inputIndex] == subPattern[subPatternIndex])
             {
-                regExindex = regExOrindex;
-                if (regEx[regExindex] != input[inputindex])
+                ++inputIndex;
+                ++subPatternIndex;
+                if (subPattern[subPatternIndex] == '|')
                 {
-                    inputindex += 1;
+                    return true;
                 }
-                current = input[inputindex];
+            }
+            else if (subPattern[subPatternIndex + 1] == '|')
+            {
+                subPatternIndex = subPatternIndex + 2;
+            }
+            else if (input[inputIndex + 1] != '\0')
+            {
+                inputIndex++;
+            }
+            else if (inputIndex != 0 && subPatternIndex != 0)
+            {
+                subPatternIndex = 0;
+            }
+
+            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
+            {
+                inputIndex = 0;
+                subPatternIndex = orIndex + 1;
             }
             else
             {
-                while (regExCurrent != '\0')
-                {
-                    if (regExCurrent == '[')
-                    {
-                        break;
-                    }
-                    if (regExCurrent == '|')
-                    {
-                        regExOrindex = regExindex;
-                        orCount += 1;
-                        break;
-                    }
-                    regExCurrent = regEx[regExindex];
-                    regExindex += 1;
-                }
-                regExindex = 0;
-                if (orCount)
-                {
-                    regExindex = regExOrindex;
-                    inputindex = 0;
-                    orCount -= 1;
-                }
-                else
-                {
-                    cout << "Not compatible" << endl;
-                    break;
-                }
+                return false; // Eşleşme yok
             }
         }
     }
-    return 0;
+
+    // Desenin sonuna ulaşıldı mı?
+    return true;
+}
+
+// Ana işlev: Verilen desenin girişle eşleşip eşleşmediğini kontrol eder
+bool isMatch(const string &input, const string &pattern)
+{
+    size_t inputIndex = 0;
+    size_t patternIndex = 0;
+
+    int orCount = 0;
+    int orIndex = 0;
+    while (pattern[patternIndex] != '\0')
+    {
+        if (pattern[patternIndex] == '|')
+        {
+            orCount++;
+            orIndex = patternIndex;
+        }
+        patternIndex++;
+    }
+    patternIndex = 0;
+    while (inputIndex < input.size() || patternIndex < pattern.size())
+    {
+        if (pattern[patternIndex] == '(')
+        {
+            // Parantez grubunu işle
+            ++patternIndex;
+            size_t groupStart = patternIndex;
+            int parenCount = 1;
+            while (patternIndex < pattern.size() && parenCount != 0)
+            {
+                if (pattern[patternIndex] == '(')
+                {
+                    ++parenCount;
+                }
+                else if (pattern[patternIndex] == ')')
+                {
+                    --parenCount;
+                }
+                ++patternIndex;
+            }
+            string groupPattern = pattern.substr(groupStart, patternIndex - groupStart - 1);
+
+            // Parantez grubunu kontrol et
+            if (isSubMatch(input, inputIndex, groupPattern, patternIndex))
+            {
+                continue; // Bir sonraki karaktere geç
+            }
+            else
+            {
+                if (pattern[patternIndex] == '?')
+                {
+                    // '?' karakterini işle
+                    ++patternIndex; // '?' karakterini atla
+                    continue;       // Bir sonraki karaktere geç
+                }
+                return false; // Eşleşme yok
+            }
+        }
+        else if (pattern[patternIndex] == '\0')
+        {
+            return 1;
+        }
+        else if (pattern[patternIndex] == '[')
+        {
+            while (pattern[patternIndex] != ']')
+            {
+                patternIndex += 1;
+                if (pattern[patternIndex] == '-')
+                {
+                    char before = pattern[patternIndex - 1];
+                    char after = pattern[patternIndex + 1];
+                    if (input[inputIndex] >= before && input[inputIndex] <= after)
+                    {
+                        patternIndex += 2;
+                        inputIndex += 1;
+                    }
+                    else
+                    {
+                        patternIndex = 0;
+                    }
+                }
+                if (pattern[patternIndex] == ']')
+                {
+                    patternIndex += 1;
+                    // regExArrayindex = 0;
+                    break;
+                }
+                // regExarray[regExArrayindex] = pattern[patternIndex];
+                // regExArrayindex += 1;
+            }
+
+            // while (regExarray[regExArrayindex] != '\0')
+            // {
+            //     if (input[inputIndex] == regExarray[regExArrayindex])
+            //     {
+            //         inputIndex += 1;
+            //         patternIndex += 1;
+            //         input[inputIndex] = input[inputIndex];
+            //         pattern[patternIndex] = pattern[patternIndex];
+
+            //         regExArrayindex += 30;
+            //         break;
+            //     }
+            //     regExArrayindex += 1;
+            // }
+        }
+
+        else if (pattern[patternIndex] == '?')
+        {
+            // '?' karakterini işle
+            ++patternIndex; // '?' karakterini atla
+            continue;       // Bir sonraki karaktere geç
+        }
+        else
+        {
+            // Tek karakteri kontrol et
+            if (inputIndex < input.size() && input[inputIndex] == pattern[patternIndex])
+            {
+                ++inputIndex;
+                ++patternIndex;
+            }
+            else if (pattern[patternIndex] == '|')
+            {
+                return true;
+            }
+            else if (input[inputIndex + 1] != '\0')
+            {
+                inputIndex++;
+            }
+            else if (inputIndex != 0 && patternIndex != 0)
+            {
+                patternIndex = 0;
+            }
+
+            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
+            {
+                inputIndex = 0;
+                patternIndex = orIndex + 1;
+            }
+            else
+            {
+                return false; // Eşleşme yok
+            }
+        }
+    }
+
+    // Girişin sonuna ve desenin sonuna ulaşıldı mı?
+    return inputIndex == input.size() && patternIndex == pattern.size();
+}
+
+int main()
+{
+    string pattern = "gr(a|e)y"; // Matches "a", "aBC", "aBaC"
+    string input = "grexgray";       // pattern regexes
+    // aBa match
+
+    string input1 = "grayx";
+    string input2 = "xhello";
+    string input3 = "xhellox";
+    string input4 = "aBaX"; // Bu giriş eşleşmemelidir
+    string input5 = "aaC";
+
+    cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
+    cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
+    // cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
+    // cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
+    // cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
+    // cout << "Input: " << input5 << ", Pattern: " << pattern << ", Match: " << isMatch(input5, pattern) << endl;
 }
 
 /*
@@ -206,62 +288,84 @@ $
 Escape Character: \
 Within square brackets, you only have to escape (1) an initial ^, (2) a non-initial or non-final -, (3) a non-initial ], and (4) a \.
 
-
+1.
 hello contains {hello}                                                  +
 hello hellox xhello xhellox                                             +
 
+2.
 gray|grey contains {gray, grey}                                         +
--
+gray grayx xgray xgrayx grgrayx xxgreyx                                 +
 
+3.
 gr(a|e)y contains {gray, grey}                                          +
--
+gray grey grayx xgray xgrayx grexgray                                   +
 
-gr[ae]y contains {gray, grey}                                           +
-gray grey xgray xgrey grayx  greyx xgrayx  xgreyx xgrayx                +
+4.
+gr[ae]y contains {gray, grey}                                           -
+gray grey xgray xgrey grayx  greyx xgrayx  xgreyx xgrayx                -
 
-b[aeiou]bble    contains {babble, bebble, bibble, bobble, bubble}       +
-babble xbabble babblex xbabblex                                         +
+5.
+b[aeiou]bble    contains {babble, bebble, bibble, bobble, bubble}       -
+babble xbabble babblex xbabblex                                         -
 
+6.
 [b-chm-pP]at|ot  contains {bat, cat, hat, mat, nat, oat, pat, Pat, ot}  -
 
-[a-zA-Z] a through z or A through Z, inclusive (range)                  +
+7.
+[a-zA-Z] a through z or A through Z, inclusive (range)                  -
                                                                         -
-
-colou?r contains {color, colour}                                        +
+8.
+colou?r contains {color, colour}                                        -
                                                                         -
-                                                                        
-rege(x(es)?|xps?) contains {regex, regexes, regexp, regexps}
-
+9.
+rege(x(es)?|xps?) contains {pattern, regexes, regexp, regexps}          -
+                                                                        -
+10.
 go*gle contains {ggle, gogle, google, gooogle, goooogle, ...}
 
+11.
 go+gle contains {gogle, google, gooogle, goooogle, ...}
 
+12.
 g(oog)+le contains {google, googoogle, googoogoogle, googoogoogoogle, ...}
 
+13.
 z{3} contains {zzz}
 
+14.
 z{3,6} contains {zzz, zzzz, zzzzz, zzzzzz}
 
+15.
 z{3,} contains {zzz, zzzz, zzzzz, ...}
 
+16.
 [Gg]o\*\*le contains {Go**le, go**le }
 
+17.
 \d contains {0,1,2,3,4,5,6,7,8,9}
 
+18.
 1\d{10} contains an 11-digit string starting with a 1
 
+19.
 Hello\nworld contains Hello followed by a newline followed by world
 
+20.
 mi.....f contains a nine-character (sub)string beginning with mi and ending with ft (Note: depending on context, the dot stands either for “any character at all” or “any character except a newline”.) Each dot is allowed to match a different character, so both microsoft and minecraft will match.
 
+21.
 ^dog begins with "dog"
 
+22.
 dog$ ends with "dog"
 
+23.
 ^dog$ is exactly "dog"
 
+24.
 [^i*&2@] contains any character other than an i, asterisk, ampersand, 2, or at-sign.
 
+25.
 ([A-Z])\w+      Finds all words starting with uppercase letter
 
 */
