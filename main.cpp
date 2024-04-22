@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
+#include <vector>
 using namespace std;
 
 // Yardımcı işlev: Verilen desenin bir parçaya eşleşip eşleşmediğini kontrol eder
-bool isSubMatch(const string &input, size_t &inputIndex, const string &subPattern, size_t &patternIndex)
+bool isSubMatch(string &input, size_t &inputIndex, const string &subPattern, size_t &patternIndex)
 {
 
     size_t subPatternIndex = 0;
@@ -11,10 +12,22 @@ bool isSubMatch(const string &input, size_t &inputIndex, const string &subPatter
     int orIndex = 0;
     while (subPattern[subPatternIndex] != '\0')
     {
-        if (subPattern[subPatternIndex] == '|')
+        int parentheses = 0;
+        if (subPattern[subPatternIndex] == '(')
         {
+            parentheses++;
+        }
+        else if (subPattern[subPatternIndex] == ')')
+        {
+            parentheses--;
+        }
+        else if (subPattern[subPatternIndex] == '|' && parentheses == 0)
+        {
+
             orCount++;
             orIndex = subPatternIndex;
+            input = input.substr(inputIndex, subPattern.size() - inputIndex);
+            inputIndex = 0;
         }
         subPatternIndex++;
     }
@@ -68,29 +81,30 @@ bool isSubMatch(const string &input, size_t &inputIndex, const string &subPatter
             {
                 ++inputIndex;
                 ++subPatternIndex;
-                if (subPattern[subPatternIndex] == '|')
-                {
-                    return true;
-                }
+            }
+            else if (subPattern[subPatternIndex] == '|' && input[inputIndex] == ('\0'))
+            {
+                return true;
             }
             else if (subPattern[subPatternIndex + 1] == '|')
             {
                 subPatternIndex = subPatternIndex + 2;
             }
-            else if (input[inputIndex + 1] != '\0')
+            else if (inputIndex < input.size())
             {
+                char test = input[inputIndex + 1];
                 inputIndex++;
+            }
+            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
+            {
+                inputIndex = 0;
+                subPatternIndex = orIndex + 1;
             }
             else if (inputIndex != 0 && subPatternIndex != 0)
             {
                 subPatternIndex = 0;
             }
 
-            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
-            {
-                inputIndex = 0;
-                subPatternIndex = orIndex + 1;
-            }
             else
             {
                 return false; // Eşleşme yok
@@ -103,16 +117,27 @@ bool isSubMatch(const string &input, size_t &inputIndex, const string &subPatter
 }
 
 // Ana işlev: Verilen desenin girişle eşleşip eşleşmediğini kontrol eder
-bool isMatch(const string &input, const string &pattern)
+bool isMatch(string &input, const string &pattern)
 {
     size_t inputIndex = 0;
     size_t patternIndex = 0;
 
     int orCount = 0;
     int orIndex = 0;
+    std::vector<char> squareBracektsArray;
+
     while (pattern[patternIndex] != '\0')
     {
-        if (pattern[patternIndex] == '|')
+        int parentheses = 0;
+        if (pattern[patternIndex] == '(')
+        {
+            parentheses++;
+        }
+        else if (pattern[patternIndex] == ')')
+        {
+            parentheses--;
+        }
+        else if (pattern[patternIndex] == '|' && parentheses != 0)
         {
             orCount++;
             orIndex = patternIndex;
@@ -120,6 +145,7 @@ bool isMatch(const string &input, const string &pattern)
         patternIndex++;
     }
     patternIndex = 0;
+
     while (inputIndex < input.size() || patternIndex < pattern.size())
     {
         if (pattern[patternIndex] == '(')
@@ -164,6 +190,7 @@ bool isMatch(const string &input, const string &pattern)
         }
         else if (pattern[patternIndex] == '[')
         {
+            bool found = false;
             while (pattern[patternIndex] != ']')
             {
                 patternIndex += 1;
@@ -173,45 +200,65 @@ bool isMatch(const string &input, const string &pattern)
                     char after = pattern[patternIndex + 1];
                     if (input[inputIndex] >= before && input[inputIndex] <= after)
                     {
-                        patternIndex += 2;
+                        found = true;
+                        while (pattern[patternIndex] != ']')
+                        {
+                            patternIndex++;
+                        }
                         inputIndex += 1;
                     }
                     else
                     {
-                        patternIndex = 0;
+                        if (pattern[patternIndex] != ']')
+                            patternIndex += 2;
                     }
                 }
                 if (pattern[patternIndex] == ']')
                 {
                     patternIndex += 1;
-                    // regExArrayindex = 0;
                     break;
                 }
-                // regExarray[regExArrayindex] = pattern[patternIndex];
-                // regExArrayindex += 1;
+                squareBracektsArray.push_back(pattern[patternIndex]);
             }
 
-            // while (regExarray[regExArrayindex] != '\0')
-            // {
-            //     if (input[inputIndex] == regExarray[regExArrayindex])
-            //     {
-            //         inputIndex += 1;
-            //         patternIndex += 1;
-            //         input[inputIndex] = input[inputIndex];
-            //         pattern[patternIndex] = pattern[patternIndex];
+            for (const auto &element : squareBracektsArray)
+            {
+                if (input[inputIndex] == element)
+                {
+                    inputIndex += 1;
+                    found = true;
+                    break;
+                }
+            }
 
-            //         regExArrayindex += 30;
-            //         break;
-            //     }
-            //     regExArrayindex += 1;
-            // }
+            if (!found)
+                return false;
         }
-
         else if (pattern[patternIndex] == '?')
         {
             // '?' karakterini işle
             ++patternIndex; // '?' karakterini atla
             continue;       // Bir sonraki karaktere geç
+        }
+        else if (pattern[patternIndex] == '*')
+        {
+            int astCharIndex = patternIndex - 1;
+            inputIndex--;
+            while (input[inputIndex] == pattern[astCharIndex])
+            {
+                inputIndex++;
+            }
+            patternIndex++;
+        }
+        else if (pattern[patternIndex] == '+')
+        {
+            int astCharIndex = patternIndex - 1;
+            inputIndex--;
+            while (input[inputIndex] == pattern[astCharIndex])
+            {
+                inputIndex++;
+            }
+            patternIndex++;
         }
         else
         {
@@ -221,6 +268,14 @@ bool isMatch(const string &input, const string &pattern)
                 ++inputIndex;
                 ++patternIndex;
             }
+            else if (pattern[patternIndex + 1] == '*')
+            {
+                patternIndex++;
+            }
+            else if (pattern[patternIndex + 1] == '?')
+            {
+                patternIndex++;
+            }
             else if (pattern[patternIndex] == '|')
             {
                 return true;
@@ -228,17 +283,22 @@ bool isMatch(const string &input, const string &pattern)
             else if (input[inputIndex + 1] != '\0')
             {
                 inputIndex++;
+                if (patternIndex != 0)
+                {
+                    patternIndex = 0;
+                    inputIndex--;
+                }
+            }
+            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
+            {
+                inputIndex = 0;
+                patternIndex = orIndex + 1;
             }
             else if (inputIndex != 0 && patternIndex != 0)
             {
                 patternIndex = 0;
             }
 
-            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
-            {
-                inputIndex = 0;
-                patternIndex = orIndex + 1;
-            }
             else
             {
                 return false; // Eşleşme yok
@@ -252,21 +312,19 @@ bool isMatch(const string &input, const string &pattern)
 
 int main()
 {
-    string pattern = "gr(a|e)y"; // Matches "a", "aBC", "aBaC"
-    string input = "grexgray";       // pattern regexes
-    // aBa match
+    string pattern = "go+gle";
+    string input = "ggle"; // pattern regexes
 
-    string input1 = "grayx";
-    string input2 = "xhello";
-    string input3 = "xhellox";
-    string input4 = "aBaX"; // Bu giriş eşleşmemelidir
-    string input5 = "aaC";
-
+    string input1 = "gogle";
+    string input2 = "google";
+    string input3 = "goooooooooogle";
+    string input4 = "regdex"; // Bu giriş eşleşmemelidir
+    string input5 = "oat";
     cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
     cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
-    // cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
-    // cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
-    // cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
+    cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
+    cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
+    cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
     // cout << "Input: " << input5 << ", Pattern: " << pattern << ", Match: " << isMatch(input5, pattern) << endl;
 }
 
@@ -301,30 +359,36 @@ gr(a|e)y contains {gray, grey}                                          +
 gray grey grayx xgray xgrayx grexgray                                   +
 
 4.
-gr[ae]y contains {gray, grey}                                           -
-gray grey xgray xgrey grayx  greyx xgrayx  xgreyx xgrayx                -
+gr[ae]y contains {gray, grey}                                           +
+gray grey xgray xgrey grayx  greyx xgrayx  xgreyx xgrayx                +
 
 5.
-b[aeiou]bble    contains {babble, bebble, bibble, bobble, bubble}       -
-babble xbabble babblex xbabblex                                         -
+b[aeiou]bble    contains {babble, bebble, bibble, bobble, bubble}       +
+babble xbabble babblex xbabblex                                         +
 
 6.
-[b-chm-pP]at|ot  contains {bat, cat, hat, mat, nat, oat, pat, Pat, ot}  -
+[b-chm-pP]at|ot  contains {bat, cat, hat, mat, nat, oat, pat, Pat, ot}  +
+bat, cat, hat, mat, nat, oat, pat, Pat, ot                              +
 
 7.
-[a-zA-Z] a through z or A through Z, inclusive (range)                  -
-                                                                        -
+[a-zA-Z] a through z or A through Z, inclusive (range)                  +
+E r E N Ka                                                              +
+
 8.
-colou?r contains {color, colour}                                        -
-                                                                        -
+colou?r contains {color, colour}                                        +
+color colour xcolour colorx                                             +
+
 9.
-rege(x(es)?|xps?) contains {pattern, regexes, regexp, regexps}          -
-                                                                        -
+rege(x(es)?|xps?) contains {pattern, regexes, regexp, regexps}          +
+regex regexes regexp regexps                                            +
+
 10.
-go*gle contains {ggle, gogle, google, gooogle, goooogle, ...}
+go*gle                                                                  +
+contains {ggle, gogle, google, gooogle, goooogle, ...}                  +
 
 11.
-go+gle contains {gogle, google, gooogle, goooogle, ...}
+go+gle                                                                  +
+contains {gogle, google, gooogle, goooogle, ...}                        +
 
 12.
 g(oog)+le contains {google, googoogle, googoogoogle, googoogoogoogle, ...}
