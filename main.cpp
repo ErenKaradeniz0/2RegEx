@@ -260,6 +260,77 @@ bool isMatch(string &input, const string &pattern)
             }
             patternIndex++;
         }
+        else if (pattern[patternIndex] == '{')
+        {
+            if (pattern[patternIndex + 2] == '}')
+            {
+                int limit = int(pattern[patternIndex + 1]) - 48;
+                if (input.size() < limit)
+                {
+                    return false;
+                }
+                while (inputIndex < input.size())
+                {
+                    if (input[inputIndex] == pattern[patternIndex - 1])
+                    {
+                        inputIndex++;
+                    }
+                    else
+                    {
+                        patternIndex = 0;
+                        return false;
+                    }
+                }
+                patternIndex += 3;
+            }
+            else if (pattern[patternIndex + 2] == ',')
+            {
+                int lowerLimit = int(pattern[patternIndex + 1]) - 48;
+                int upperLimit;
+                if (pattern[patternIndex + 3] == '}')
+                {
+                    upperLimit = 999999;
+                    if (input.size() < lowerLimit || input.size() > upperLimit)
+                    {
+                        return false;
+                    }
+                    while (inputIndex < input.size())
+                    {
+                        if (input[inputIndex] == pattern[patternIndex - 1])
+                        {
+                            inputIndex++;
+                        }
+                        else
+                        {
+                            patternIndex = 0;
+                            return false;
+                        }
+                    }
+                    patternIndex += 4;
+                }
+                else
+                {
+                    upperLimit = int(pattern[patternIndex + 3]) - 48;
+                    if (input.size() < lowerLimit || input.size() > upperLimit)
+                    {
+                        return false;
+                    }
+                    while (inputIndex < input.size())
+                    {
+                        if (input[inputIndex] == pattern[patternIndex - 1])
+                        {
+                            inputIndex++;
+                        }
+                        else
+                        {
+                            patternIndex = 0;
+                            return false;
+                        }
+                    }
+                    patternIndex += 5;
+                }
+            }
+        }
         else
         {
             // Tek karakteri kontrol et
@@ -312,19 +383,19 @@ bool isMatch(string &input, const string &pattern)
 
 int main()
 {
-    string pattern = "go+gle";
-    string input = "ggle"; // pattern regexes
+    string pattern = "z{3,}";
+    string input = "zzz"; // pattern regexes
 
-    string input1 = "gogle";
-    string input2 = "google";
-    string input3 = "goooooooooogle";
+    string input1 = "z";
+    string input2 = "zzzzz";
+    string input3 = "zzzzzz";
     string input4 = "regdex"; // Bu giriş eşleşmemelidir
     string input5 = "oat";
     cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
     cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
     cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
     cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
-    cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
+    // cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
     // cout << "Input: " << input5 << ", Pattern: " << pattern << ", Match: " << isMatch(input5, pattern) << endl;
 }
 
@@ -391,19 +462,24 @@ go+gle                                                                  +
 contains {gogle, google, gooogle, goooogle, ...}                        +
 
 12.
-g(oog)+le contains {google, googoogle, googoogoogle, googoogoogoogle, ...}
+g(oog)+le                                                               -
+contains {google, googoogle, googoogoogle, googoogoogoogle, ...}        -
 
 13.
-z{3} contains {zzz}
+z{3}                                                                    +
+contains {zzz}                                                          +
 
 14.
-z{3,6} contains {zzz, zzzz, zzzzz, zzzzzz}
+z{3,6}                                                                  +
+contains {zzz, zzzz, zzzzz, zzzzzz}                                     +
 
 15.
-z{3,} contains {zzz, zzzz, zzzzz, ...}
+z{3,}                                                                   +
+contains {zzz, zzzz, zzzzz, ...}                                        +
 
 16.
-[Gg]o\*\*le contains {Go**le, go**le }
+[Gg]o\*\*le
+contains {Go**le, go**le }
 
 17.
 \d contains {0,1,2,3,4,5,6,7,8,9}
