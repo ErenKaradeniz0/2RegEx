@@ -185,10 +185,6 @@ bool isMatch(string &input, const string &pattern)
                 return false; // Eşleşme yok
             }
         }
-        else if (pattern[patternIndex] == '\0')
-        {
-            return 1;
-        }
         else if (pattern[patternIndex] == '[')
         {
             bool found = false;
@@ -212,6 +208,24 @@ bool isMatch(string &input, const string &pattern)
                     {
                         if (pattern[patternIndex] != ']')
                             patternIndex += 2;
+                    }
+                }
+                if (pattern[patternIndex] == '^')
+                {
+                    while (patternIndex < pattern.size())
+                    {
+                        patternIndex += 1;
+                        for (int i = 0; i < input.size(); i++)
+                        {
+                            if (input[i] == pattern[patternIndex]){
+                                return false;
+                            }
+                            if(patternIndex == pattern.size() && inputIndex == 0){
+                                return true;
+                            }
+                            
+                        }
+
                     }
                 }
                 if (pattern[patternIndex] == ']')
@@ -389,10 +403,38 @@ bool isMatch(string &input, const string &pattern)
                     patternIndex++;
                     inputIndex++;
                 }
+                else if (pattern[patternIndex] == '$')
+                {
+                    patternIndex++;
+                    if (input[inputIndex] == '\0')
+                        return true;
+                    else
+                    {
+                        return false;
+                    }
+                }
                 else
                 {
                     return false;
                 }
+            }
+        }
+        else if (pattern[patternIndex] == '$')
+        {
+            patternIndex = 0;
+            inputIndex = 0;
+            while (input.size() > inputIndex)
+            {
+                if (pattern[patternIndex] == input[inputIndex])
+                {
+                    patternIndex++;
+                }
+                if (pattern[patternIndex] == '$')
+                {
+                    patternIndex++;
+                    break;
+                }
+                inputIndex++;
             }
         }
         else
@@ -447,15 +489,15 @@ bool isMatch(string &input, const string &pattern)
 
 int main()
 {
-    string pattern = "^dog";
-    string input = "doggo";
+    string pattern = "[^i*&2@]";
+    string input = "i";
 
-    string input1 = "catdog";
+    string input1 = "q";
     string input2 = "zzzzz";
     string input3 = "zzzzzz";
     string input4 = "regdex"; // Bu giriş eşleşmemelidir
     string input5 = "oat";
-    cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
+    // cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
     cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
     // cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
     // cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
@@ -526,8 +568,7 @@ go+gle                                                                  +
 contains {gogle, google, gooogle, goooogle, ...}                        +
 
 12.
-g(oog)+le                                                               -
-contains {google, googoogle, googoogoogle, googoogoogoogle, ...}        -
+g(oog)+le contains {google, googoogle, googoogoogle, googoogoogoogle, ...} -
 
 13.
 z{3}                                                                    +
@@ -551,7 +592,6 @@ contains {0,1,2,3,4,5,6,7,8,9}                                          +
 
 18.
 1\d{10} contains an 11-digit string starting with a 1                   -
-                                                                        -
 
 19.
 Hello\nworld contains Hello followed by a newline followed by world     -
@@ -565,15 +605,15 @@ ending with ft (“any character except a newline”.) microsoft and minecraft w
 ^dog begins with "dog"                                                                  +
 
 22.
-dog$ ends with "dog"
+dog$ ends with "dog"                                                                    +
 
 23.
-^dog$ is exactly "dog"
+^dog$ is exactly "dog"                                                                  +
 
 24.
-[^i*&2@] contains any character other than an i, asterisk, ampersand, 2, or at-sign.
+[^i*&2@] contains any character other than an i, asterisk, ampersand, 2, or at-sign.    +
 
 25.
-([A-Z])\w+      Finds all words starting with uppercase letter
+([A-Z])\w+      Finds all words starting with uppercase letter                          -
 
 */
