@@ -148,6 +148,7 @@ bool isMatch(string &input, const string &pattern)
 
     while (inputIndex < input.size() || patternIndex < pattern.size())
     {
+        char test = pattern[patternIndex];
         if (pattern[patternIndex] == '(')
         {
             // Parantez grubunu işle
@@ -243,10 +244,21 @@ bool isMatch(string &input, const string &pattern)
         else if (pattern[patternIndex] == '*')
         {
             int astCharIndex = patternIndex - 1;
-            inputIndex--;
-            while (input[inputIndex] == pattern[astCharIndex])
+            if (pattern[astCharIndex] == '\\' && pattern[astCharIndex + 2] == '\\')
+            {
+                patternIndex++;
+                inputIndex++;
+            }
+            else if (pattern[astCharIndex] == '\\')
             {
                 inputIndex++;
+            }
+            else
+            {
+                while (input[inputIndex] == pattern[astCharIndex])
+                {
+                    inputIndex++;
+                }
             }
             patternIndex++;
         }
@@ -331,6 +343,58 @@ bool isMatch(string &input, const string &pattern)
                 }
             }
         }
+        else if (pattern[patternIndex] == '\\')
+        {
+            patternIndex++;
+            if (pattern[patternIndex] == 'd')
+            {
+                patternIndex++;
+                if (pattern[patternIndex] != '\0')
+                {
+                    if (input.size() != 1)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    int inputInteger = int(input[inputIndex]) - 48;
+                    if (inputInteger >= 0 && inputInteger <= 9)
+                    {
+                        inputIndex++;
+                    }
+                    else
+                    {
+                        patternIndex = 0;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (pattern[patternIndex] == '.')
+        {
+            if (input[inputIndex] != '\n')
+            {
+                inputIndex++;
+                patternIndex++;
+            }
+        }
+        else if (pattern[patternIndex] == '^')
+        {
+            patternIndex++;
+            while (pattern.size() > patternIndex)
+            {
+                if (pattern[patternIndex] == input[inputIndex])
+                {
+                    patternIndex++;
+                    inputIndex++;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
         else
         {
             // Tek karakteri kontrol et
@@ -383,18 +447,18 @@ bool isMatch(string &input, const string &pattern)
 
 int main()
 {
-    string pattern = "z{3,}";
-    string input = "zzz"; // pattern regexes
+    string pattern = "^dog";
+    string input = "doggo";
 
-    string input1 = "z";
+    string input1 = "catdog";
     string input2 = "zzzzz";
     string input3 = "zzzzzz";
     string input4 = "regdex"; // Bu giriş eşleşmemelidir
     string input5 = "oat";
     cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
     cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
-    cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
-    cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
+    // cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
+    // cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
     // cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
     // cout << "Input: " << input5 << ", Pattern: " << pattern << ", Match: " << isMatch(input5, pattern) << endl;
 }
@@ -478,23 +542,27 @@ z{3,}                                                                   +
 contains {zzz, zzzz, zzzzz, ...}                                        +
 
 16.
-[Gg]o\*\*le
-contains {Go**le, go**le }
+[Gg]o\*\*le                                                             +
+contains {Go**le, go**le }                                              +
 
 17.
-\d contains {0,1,2,3,4,5,6,7,8,9}
+\d                                                                      +
+contains {0,1,2,3,4,5,6,7,8,9}                                          +
 
 18.
-1\d{10} contains an 11-digit string starting with a 1
+1\d{10} contains an 11-digit string starting with a 1                   -
+                                                                        -
 
 19.
-Hello\nworld contains Hello followed by a newline followed by world
+Hello\nworld contains Hello followed by a newline followed by world     -
+
 
 20.
-mi.....f contains a nine-character (sub)string beginning with mi and ending with ft (Note: depending on context, the dot stands either for “any character at all” or “any character except a newline”.) Each dot is allowed to match a different character, so both microsoft and minecraft will match.
+mi.....ft contains a nine-character (sub)string beginning with mi and   +
+ending with ft (“any character except a newline”.) microsoft and minecraft will match.  +
 
 21.
-^dog begins with "dog"
+^dog begins with "dog"                                                                  +
 
 22.
 dog$ ends with "dog"
