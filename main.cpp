@@ -26,8 +26,8 @@ bool isSubMatch(string &input, size_t &inputIndex, const string &subPattern, siz
 
             orCount++;
             orIndex = subPatternIndex;
-            input = input.substr(inputIndex, subPattern.size() - inputIndex);
-            inputIndex = 0;
+            // input = input.substr(inputIndex, subPattern.size() - inputIndex);
+            // inputIndex = 0;
         }
         subPatternIndex++;
     }
@@ -126,9 +126,9 @@ bool isMatch(string &input, const string &pattern)
     int orIndex = 0;
     std::vector<char> squareBracektsArray;
 
+    int parentheses = 0;
     while (pattern[patternIndex] != '\0')
     {
-        int parentheses = 0;
         if (pattern[patternIndex] == '(')
         {
             parentheses++;
@@ -137,7 +137,7 @@ bool isMatch(string &input, const string &pattern)
         {
             parentheses--;
         }
-        else if (pattern[patternIndex] == '|' && parentheses != 0)
+        else if (pattern[patternIndex] == '|' && parentheses == 0)
         {
             orCount++;
             orIndex = patternIndex;
@@ -217,15 +217,15 @@ bool isMatch(string &input, const string &pattern)
                         patternIndex += 1;
                         for (int i = 0; i < input.size(); i++)
                         {
-                            if (input[i] == pattern[patternIndex]){
+                            if (input[i] == pattern[patternIndex])
+                            {
                                 return false;
                             }
-                            if(patternIndex == pattern.size() && inputIndex == 0){
+                            if (patternIndex == pattern.size() && inputIndex == 0)
+                            {
                                 return true;
                             }
-                            
                         }
-
                     }
                 }
                 if (pattern[patternIndex] == ']')
@@ -258,12 +258,12 @@ bool isMatch(string &input, const string &pattern)
         else if (pattern[patternIndex] == '*')
         {
             int astCharIndex = patternIndex - 1;
-            if (pattern[astCharIndex] == '\\' && pattern[astCharIndex + 2] == '\\')
+            if (pattern[patternIndex] == input[inputIndex] && pattern[astCharIndex] == '\\' && pattern[astCharIndex + 2] == '\\')
             {
                 patternIndex++;
                 inputIndex++;
             }
-            else if (pattern[astCharIndex] == '\\')
+            else if (pattern[patternIndex] == input[inputIndex] && pattern[astCharIndex] == '\\')
             {
                 inputIndex++;
             }
@@ -421,20 +421,25 @@ bool isMatch(string &input, const string &pattern)
         }
         else if (pattern[patternIndex] == '$')
         {
-            patternIndex = 0;
-            inputIndex = 0;
-            while (input.size() > inputIndex)
+            patternIndex = pattern.size() - 1 ;
+            inputIndex = input.size() - 1;
+            while (patternIndex!=0)
             {
-                if (pattern[patternIndex] == input[inputIndex])
-                {
-                    patternIndex++;
-                }
                 if (pattern[patternIndex] == '$')
                 {
-                    patternIndex++;
-                    break;
+                    patternIndex--;
                 }
-                inputIndex++;
+                else if (pattern[patternIndex] == input[inputIndex])
+                {
+                    patternIndex--;
+                    inputIndex--;
+                }
+                else{
+                    return false;
+                }
+            }
+            if (patternIndex == 0){
+                return true;
             }
         }
         else
@@ -460,16 +465,25 @@ bool isMatch(string &input, const string &pattern)
             else if (input[inputIndex + 1] != '\0')
             {
                 inputIndex++;
-                if (patternIndex != 0)
+                if (pattern[patternIndex] != '\0' && patternIndex != 0)
                 {
                     patternIndex = 0;
                     inputIndex--;
                 }
             }
-            else if (input[inputIndex + 1] == '\0' && orIndex != 0)
+            else if (orIndex != 0)
             {
+                orIndex--;
                 inputIndex = 0;
                 patternIndex = orIndex + 1;
+            }
+
+            else if (pattern[patternIndex == '\0'] && input[inputIndex] != '\0')
+            {
+                while (input[inputIndex] != '\0')
+                {
+                    inputIndex += 1;
+                }
             }
             else if (inputIndex != 0 && patternIndex != 0)
             {
@@ -490,17 +504,16 @@ bool isMatch(string &input, const string &pattern)
 int main()
 {
     string pattern = "[^i*&2@]";
-    string input = "i";
+    string input = "hello";
 
-    string input1 = "q";
-    string input2 = "zzzzz";
-    string input3 = "zzzzzz";
-    string input4 = "regdex"; // Bu giriş eşleşmemelidir
-    string input5 = "oat";
-    // cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
+    string input1 = "ill";
+    string input2 = "g**gle";
+    string input3 = "eren@gmail.com";
+
+    cout << "Input: " << input << ", Pattern: " << pattern << ", Match: " << isMatch(input, pattern) << endl;
     cout << "Input: " << input1 << ", Pattern: " << pattern << ", Match: " << isMatch(input1, pattern) << endl;
-    // cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
-    // cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
+    cout << "Input: " << input2 << ", Pattern: " << pattern << ", Match: " << isMatch(input2, pattern) << endl;
+    cout << "Input: " << input3 << ", Pattern: " << pattern << ", Match: " << isMatch(input3, pattern) << endl;
     // cout << "Input: " << input4 << ", Pattern: " << pattern << ", Match: " << isMatch(input4, pattern) << endl;
     // cout << "Input: " << input5 << ", Pattern: " << pattern << ", Match: " << isMatch(input5, pattern) << endl;
 }
@@ -540,11 +553,11 @@ gr[ae]y contains {gray, grey}                                           +
 gray grey xgray xgrey grayx  greyx xgrayx  xgreyx xgrayx                +
 
 5.
-b[aeiou]bble    contains {babble, bebble, bibble, bobble, bubble}       +
-babble xbabble babblex xbabblex                                         +
+b[aeiou]bble                                                            +
+babble bebble bibble bobble bubble xbabble babblex xbabblex             +
 
 6.
-[b-chm-pP]at|ot  contains {bat, cat, hat, mat, nat, oat, pat, Pat, ot}  +
+[b-chm-pP]at|ot                                                         +
 bat, cat, hat, mat, nat, oat, pat, Pat, ot                              +
 
 7.
